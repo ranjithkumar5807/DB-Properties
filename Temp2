@@ -1,0 +1,93 @@
+@RestController
+@RequestMapping("/api/farmers")
+@RequiredArgsConstructor
+public class FarmerController {
+
+    private final FarmerService farmerService;
+    private final ProductService productService;
+
+    @PostMapping("/register")
+    public ResponseEntity<Farmer> register(@RequestBody Farmer farmer) {
+        return ResponseEntity.ok(farmerService.registerFarmer(farmer));
+    }
+
+    @GetMapping("/{id}/products")
+    public ResponseEntity<List<Product>> getProducts(@PathVariable Long id) {
+        return ResponseEntity.ok(farmerService.getFarmerProducts(id));
+    }
+
+    @PostMapping("/{id}/products")
+    public ResponseEntity<Product> addProduct(@PathVariable Long id, @RequestBody Product product) {
+        Farmer farmer = new Farmer();
+        farmer.setId(id);
+        product.setFarmer(farmer);
+        return ResponseEntity.ok(productService.addProduct(product));
+    }
+}
+
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
+public class ProductController {
+
+    private final ProductService productService;
+
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productService.getAllProducts());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+@RestController
+@RequestMapping("/api/cart")
+@RequiredArgsConstructor
+public class CartController {
+
+    private final CartService cartService;
+    private final UserService userService;
+    private final ProductService productService;
+
+    @PostMapping("/add")
+    public ResponseEntity<String> addToCart(@RequestParam Long userId,
+                                            @RequestParam Long productId,
+                                            @RequestParam int quantity) {
+        User user = userService.getUserById(userId).orElseThrow();
+        Product product = productService.getProductsByFarmer(productId).stream().findFirst().orElseThrow();
+        cartService.addToCart(user, product, quantity);
+        return ResponseEntity.ok("Item added to cart");
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<CartItem>> getCart(@PathVariable Long userId) {
+        return ResponseEntity.ok(cartService.getCartItems(userId));
+    }
+}
+@RestController
+@RequestMapping("/api/orders")
+@RequiredArgsConstructor
+public class OrderController {
+
+    private final OrderService orderService;
+    private final UserService userService;
+
+    @PostMapping("/place")
+    public ResponseEntity<Order> placeOrder(@RequestParam Long userId) {
+        User user = userService.getUserById(userId).orElseThrow();
+        return ResponseEntity.ok(orderService.placeOrder(user));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<Order>> getUserOrders(@PathVariable Long userId) {
+        return ResponseEntity.ok(orderService.getUserOrders(userId));
+    }
+
+    @GetMapping("/{orderId}/items")
+    public ResponseEntity<List<OrderItem>> getOrderItems(@PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.getOrderItems(orderId));
+    }
+}

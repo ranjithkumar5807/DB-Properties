@@ -1,0 +1,1062 @@
+package ams.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import ams.dto.CartItemDTO;
+import ams.model.Product;
+import ams.model.User;
+import ams.serviceImpl.CartServiceImpl;
+import ams.serviceImpl.ProductServiceImpl;
+import ams.serviceImpl.UserServiceImpl;
+
+
+@RestController
+@RequestMapping("/api/cart")
+public class CartController {
+	@Autowired
+    private CartServiceImpl cartService;
+	@Autowired
+    private  UserServiceImpl userService;
+	@Autowired
+    private ProductServiceImpl productService;
+
+    @PostMapping("/add")
+    public ResponseEntity<String> addToCart(@RequestParam Long userId,
+                                            @RequestParam Long productId,
+                                            @RequestParam int quantity) {
+        User user = userService.getUserById(userId).orElseThrow();
+        Product product = productService.getProductById(productId).orElseThrow();
+        cartService.addToCart(user, product, quantity);
+        return ResponseEntity.ok("Item added to cart");
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<CartItemDTO>> getCart(@PathVariable Long userId) {
+        return ResponseEntity.ok(cartService.getCartItemsByUserId(userId));
+    }
+}
+
+package ams.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import ams.dto.FarmerDTO;
+import ams.model.Farmer;
+import ams.model.Product;
+import ams.serviceImpl.FarmerServiceImpl;
+import ams.serviceImpl.ProductServiceImpl;
+
+@RestController
+@RequestMapping("/api/farmers")
+public class FarmerController {
+
+	@Autowired
+    private  FarmerServiceImpl farmerService;
+	@Autowired
+    private  ProductServiceImpl productService;
+
+    @PostMapping("/register")
+    public ResponseEntity<Farmer> register(@RequestBody Farmer farmer) {
+        return ResponseEntity.ok(farmerService.registerFarmer(farmer));
+    }
+
+    @GetMapping("/{id}/products")
+    public ResponseEntity<List<Product>> getProducts(@PathVariable Long id) {
+        return ResponseEntity.ok(farmerService.getFarmerProducts(id));
+    }
+
+    @PostMapping("/{id}/products")
+    public ResponseEntity<Product> addProduct(@PathVariable Long id, @RequestBody Product product) {
+        Farmer farmer = new Farmer();
+        farmer.setId(id);
+        product.setFarmer(farmer);
+        return ResponseEntity.ok(productService.addProduct(product));
+    }
+    
+    
+    @GetMapping("/{id}")
+	public ResponseEntity<FarmerDTO> getUserById(@PathVariable Long id){
+		return farmerService.getFarmerByIdDto(id).map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
+	}
+	
+	@GetMapping("/{email}")
+	public ResponseEntity<FarmerDTO> getUserByEmail(@PathVariable String email){
+		return farmerService.getFarmerByEmailDto(email).map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
+	}
+    
+    
+}
+
+package ams.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import ams.model.Order;
+import ams.model.OrderItem;
+import ams.model.User;
+import ams.serviceImpl.OrderServiceImpl;
+import ams.serviceImpl.UserServiceImpl;
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+	@Autowired
+    private OrderServiceImpl orderService;
+	@Autowired
+    private UserServiceImpl userService;
+
+//    @PostMapping("/place")
+//    public ResponseEntity<Order> placeOrder(@RequestParam Long userId) {
+//        User user = userService.getUserById(userId).orElseThrow();
+//        return ResponseEntity.ok(orderService.placeOrder(user));
+//    }
+//
+//    @GetMapping("/{userId}")
+//    public ResponseEntity<List<Order>> getUserOrders(@PathVariable Long userId) {
+//        return ResponseEntity.ok(orderService.getUserOrders(userId));
+//    }
+//
+//    @GetMapping("/{orderId}/items")
+//    public ResponseEntity<List<OrderItem>> getOrderItems(@PathVariable Long orderId) {
+//        return ResponseEntity.ok(orderService.getOrderItems(orderId));
+//    }
+}
+
+
+package ams.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import ams.dto.ProductDTO;
+import ams.serviceImpl.ProductServiceImpl;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+	@Autowired
+    private ProductServiceImpl productService;
+	
+	@GetMapping("/{id}")
+	public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id){
+		return productService.getProductByIdDto(id).map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
+		
+		
+	}
+
+    @GetMapping
+    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+        return ResponseEntity.ok(productService.getAllProducts());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+package ams.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import ams.dto.UserDTO;
+import ams.model.User;
+import ams.serviceImpl.UserServiceImpl;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+	@Autowired
+	private UserServiceImpl userService;
+	
+	@PostMapping("/register")
+	public ResponseEntity<User> register(@RequestBody User user){
+		return ResponseEntity.ok(userService.registerUser(user));
+	}
+	
+	@GetMapping("/{id}")
+	public ResponseEntity<UserDTO> getUserById(@PathVariable Long id){
+		return userService.getUserByIdDto(id).map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
+	}
+	
+	@GetMapping("/{email}")
+	public ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email){
+		return userService.getUserByEmailDto(email).map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
+	}
+}
+
+
+package ams.dto;
+
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+
+public class CartItemDTO {
+    private Long id;
+    private Long productId;
+    private String productName;
+    private Double productPrice;
+    private Integer quantity;
+    private Double price;
+    
+    
+    public CartItemDTO(Long id, Long productId, String productName, Double productPrice, Integer quantity, Double price) {
+        this.id = id;
+        this.productId = productId;
+        this.productName = productName;
+        this.productPrice = productPrice;
+        this.quantity = quantity;
+        this.price = price;
+    }
+}
+
+
+
+    
+package ams.dto;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+public class FarmerDTO {
+    private Long id;
+    private String name;
+    private String email;
+    private String phone;
+	private String address;
+	
+	public FarmerDTO(Long id,String name,String email,String phone,String address) {
+		this.address=address;
+		this.email=email;
+		this.phone=phone;
+		this.id=id;
+		this.name=name;
+	}
+}
+package ams.dto;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderDTO {
+    private Long id;
+    private LocalDate orderDate;
+    private String status;
+    private Long userId;
+    private Double totalPrice;
+    private List<OrderItemDTO> orderItems;
+    
+    public OrderDTO(Long id,LocalDate orderDate,String status,Long userId,Double totalPrice) {
+    
+    	this.id=id;
+    	this.orderDate=orderDate;
+    	this.status=status;
+    	this.userId=userId;
+    	this.totalPrice=totalPrice;
+    	
+    }
+}
+
+package ams.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderItemDTO {
+    private Long id;
+    private Long productId;
+    private String productName;
+    private Integer quantity;
+    private Double price;
+}
+
+package ams.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductDTO {
+    private Long id;
+    private String name;
+    private String description;
+    private double price;
+    private int quantity;
+    private String imageUrl;
+    private Long farmerId;
+    private String farmerName;
+    
+}
+package ams.dto;
+
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+public class UserDTO {
+    private Long id;
+    private String name;
+    private String email;
+    private String phone;
+	private String address;
+	public UserDTO(Long id,String name,String email,String phone,String address) {
+		this.id=id;
+		this.name=name;
+		this.email=email;
+		this.phone=phone;
+		this.address=address;
+	}
+}
+
+package ams.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+//import java.util.List;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@Table(name="cart_items")
+@NoArgsConstructor
+@AllArgsConstructor
+public class CartItem {
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private Long id;
+	private Integer quantity;
+	private Double price;
+	
+	@ManyToOne
+	@JoinColumn(name="user_id")
+	@JsonIgnoreProperties("cartItems")
+	private User user;
+	
+	@ManyToOne
+	@JoinColumn(name="product_id")
+	@JsonIgnoreProperties("cartItems")
+	private Product product;
+	
+
+}
+package ams.model;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@Table(name="farmers")
+@NoArgsConstructor
+@AllArgsConstructor
+public class Farmer {
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private Long id;
+	
+	private String name;
+	private String email;
+	private String password;
+	private String phone;
+	private String address;
+	
+	@OneToMany(mappedBy="farmer",cascade = CascadeType.ALL)
+	@JsonIgnoreProperties("farmer")
+	private List<Product> products;
+	
+
+}
+package ams.model;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@Table(name="order")
+@NoArgsConstructor
+@AllArgsConstructor
+public class Order {
+	
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private Long id;
+	
+	private Double totalPrice;
+	private String status; //PENDING ACCEPTED REJECTED SHIPPED
+	private LocalDate orderDate;
+	
+	@ManyToOne
+	@JoinColumn(name="user_id")
+	@JsonIgnoreProperties("orders")
+	private User user;
+	
+	@OneToMany(mappedBy = "order",cascade=CascadeType.ALL)
+	@JsonIgnoreProperties("order")
+	private List<OrderItem> orderItems;
+
+}
+package ams.model;
+
+
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@Table(name="order_items")
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderItem {
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private Long id;
+	
+	private Integer quantity;
+	private Double price;
+	
+	@ManyToOne
+	@JoinColumn(name="order_id")
+	@JsonIgnoreProperties("orderItems")
+	private Order order;
+	
+	@ManyToOne
+	@JoinColumn(name="product_id")
+	@JsonIgnoreProperties("orderItems")
+	private Product product;
+
+}
+package ams.model;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name="products")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Product {
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private Long id;
+	
+    private String name;
+    private String description;
+    private Double price;
+    private Integer quantity;
+    private String imageUrl;
+    
+    @ManyToOne
+    @JoinColumn(name="farmer_id")
+    @JsonIgnoreProperties("products")
+    private Farmer farmer;
+    
+    @OneToMany(mappedBy="product",cascade=CascadeType.ALL)
+    @JsonIgnoreProperties("product")
+    private List<CartItem> cartItems;
+    
+    @OneToMany(mappedBy="product",cascade=CascadeType.ALL)
+    @JsonIgnoreProperties("product")
+    private List<OrderItem> orderItems;
+    
+    
+
+}
+package ams.model;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+// import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity 
+@Table(name="users")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class User {
+	
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private Long id;
+	
+	private String name;
+	private String email;
+	private String password;
+	private String phone;
+	private String address;
+	
+	@OneToMany(mappedBy="user",cascade = CascadeType.ALL)
+	@JsonIgnoreProperties("user")
+	private List<CartItem> cartitems;
+	
+	@OneToMany(mappedBy="user",cascade=CascadeType.ALL)
+	@JsonIgnoreProperties("user")
+	private List<Order> orders;
+	
+	
+}
+package ams.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import ams.dto.CartItemDTO;
+import ams.model.CartItem;
+
+@Repository
+public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+	
+	
+//	List<CartItem> findByCartId(Long cartId);
+
+	@Query("select new ams.dto.CartItemDTO(ci.id, p.id, p.name, p.price, ci.quantity,ci.price) " +
+			"FROM CartItem ci JOIN ci.product p WHERE ci.user.id = :userId")
+    List<CartItemDTO> findCartItemsByUserId(@Param("userId") Long userId);
+}
+package ams.repository;
+
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import ams.dto.FarmerDTO;
+import ams.model.Farmer;
+
+@Repository
+public interface FarmerRepository  extends JpaRepository<Farmer, Long>{
+
+	Optional<Farmer> findByEmail(String email);
+	@Query("select new  ams.dto.FarmerDTO(f.id,f.name,f.email,f.phone,f.address) from Farmer f where f.id=?1")
+	Optional<FarmerDTO> findByIdDto(Long id);
+	@Query("select new  ams.dto.FarmerDTO(f.id,f.name,f.email,f.phone,f.address) from Farmer f where f.email=?1")
+	Optional<FarmerDTO> findByEmailDto(String email);
+}
+package ams.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import ams.dto.OrderItemDTO;
+import ams.model.OrderItem;
+
+@Repository
+public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
+	List<OrderItem> findByOrderId(Long orderId);
+
+		@Query("SELECT new ams.dto.OrderItemDTO(oi.id, p.id, p.name, oi.quantity, oi.price) " +
+			"FROM OrderItem oi JOIN oi.product p WHERE oi.order.id = :orderId")
+    List<OrderItemDTO> findOrderItemsByOrderId(@Param("orderId") Long orderId);
+
+}
+package ams.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import ams.dto.OrderDTO;
+import ams.model.Order;
+
+@Repository
+public interface OrderRepository extends JpaRepository<Order, Long> {
+	List<Order> findByUserId(Long userId);
+
+	@Query("SELECT new ams.dto.OrderDTO(o.id, o.orderDate, o.totalAmount) " +
+			"FROM Order o WHERE o.user.id = ?1")
+    List<OrderDTO> findOrdersByUserId( Long userId);
+
+}
+package ams.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import ams.dto.ProductDTO;
+import ams.model.Product;
+
+@Repository
+public interface ProductRepository extends JpaRepository<Product,Long> {
+	
+	List<Product> findByFarmerId(long farmerId);
+
+	@Query("SELECT new ams.dto.ProductDTO(p.id, p.name, p.description, p.price, p.quantity,p.imageUrl, f.id, f.name) " +
+			"FROM Product p JOIN p.farmer f")
+    List<ProductDTO> findAllProductDTOs();
+
+    @Query("SELECT new ams.dto.ProductDTO(p.id, p.name, p.description, p.price, p.quantity,p.imageUrl, f.id, f.name) " +
+			"FROM Product p JOIN p.farmer f WHERE f.id = :farmerId")
+    List<ProductDTO> findProductsByFarmerId(@Param("farmerId") Long farmerId);
+    
+    @Query("SELECT new ams.dto.ProductDTO(p.id, p.name, p.description, p.price, p.quantity,p.imageUrl, f.id, f.name) " +
+			"FROM Product p JOIN p.farmer f where p.id=?1")
+    Optional<ProductDTO> findByIdDto(Long id);
+
+}
+package ams.repository;
+
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import ams.dto.UserDTO;
+import ams.model.User;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+	Optional<User> findByEmail(String email);
+	
+	@Query("Select new ams.dto.UserDTO(u.id,u.name,u.email,u.phone,u.address) from User u where u.id=?1")
+	Optional<UserDTO> findByIdDto(Long id);
+	
+	@Query("Select new ams.dto.UserDTO(u.id,u.name,u.email,u.phone,u.address) from User u where u.email=?1")
+	Optional<UserDTO> findByEmailDto(String email);
+}
+package ams.serviceImpl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import ams.dto.CartItemDTO;
+import ams.model.CartItem;
+import ams.model.Product;
+import ams.model.User;
+import ams.repository.CartItemRepository;
+
+@Service
+public class CartServiceImpl {
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    public List<CartItemDTO> getCartItemsByUserId(Long userId) {
+        return cartItemRepository.findCartItemsByUserId(userId);
+    }
+
+	public void addToCart(User user, Product product, int quantity) {
+		CartItem cart=new CartItem();
+		cart.setUser(user);
+		cart.setProduct(product);
+		cart.setQuantity(quantity);
+		cart.setPrice(product.getPrice()*quantity);
+		cartItemRepository.save(cart);
+	}
+    
+}
+package ams.serviceImpl;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import ams.dto.FarmerDTO;
+import ams.model.Farmer;
+import ams.model.Product;
+import ams.repository.FarmerRepository;
+@Service
+public class FarmerServiceImpl {
+	
+	@Autowired
+	private FarmerRepository farmerRepository;
+
+	
+	public Farmer registerFarmer(Farmer farmer) {
+		
+		return farmerRepository.save(farmer);
+	}
+
+	
+	public List<Product> getFarmerProducts(Long farmerId) {
+		return farmerRepository.findById(farmerId)
+				.map(Farmer::getProducts)
+				.orElse(Collections.emptyList());
+		
+	}
+
+	
+	public Optional<Farmer> getFarmerByEmail(String email) {
+		
+		return farmerRepository.findByEmail(email);
+	}
+	
+	public Optional<FarmerDTO> getFarmerByIdDto(Long id){
+		return farmerRepository.findByIdDto(id);
+	}
+	
+	public Optional<FarmerDTO> getFarmerByEmailDto(String email) {
+		
+		return farmerRepository.findByEmailDto(email);
+	}
+}
+package ams.serviceImpl;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import ams.dto.OrderDTO;
+import ams.dto.OrderItemDTO;
+import ams.model.CartItem;
+import ams.model.Order;
+import ams.model.OrderItem;
+import ams.model.Product;
+import ams.model.User;
+import ams.repository.CartItemRepository;
+import ams.repository.OrderItemRepository;
+import ams.repository.OrderRepository;
+import ams.repository.ProductRepository;
+@Service
+public class OrderServiceImpl {
+	
+	@Autowired
+	private OrderItemRepository orderItemRepository;
+	@Autowired
+	private OrderRepository orderRepository;
+	@Autowired
+	private CartItemRepository cartItemRepository;
+	@Autowired
+	private ProductRepository productRepository;
+
+	
+//	public Order placeOrder(User user) {
+//		
+//		List<CartItem> cartItems=cartItemRepository.findByCartId(user.getId());
+//		if (cartItems.isEmpty()) {
+//            throw new RuntimeException("Cart is empty. Cannot place order.");
+//        }
+//		
+//		Order order = new Order();
+//		order.setStatus("PENDING");
+//		order.setUser(user);
+//		order.setOrderDate(LocalDate.now());
+//
+//		double total = 0;
+//		List<OrderItem> orderItems = new ArrayList<>();
+//
+//		for (CartItem item : cartItems) {
+//			Product product = item.getProduct();
+//
+//			if (product.getQuantity() < item.getQuantity()) {
+//				throw new RuntimeException("Not enough stock for product: " + product.getName());
+//			}
+//
+//			// Update stock
+//			product.setQuantity(product.getQuantity() - item.getQuantity());
+//			productRepository.save(product);
+//
+//			OrderItem orderItem = new OrderItem();
+//			orderItem.setOrder(order);
+//			orderItem.setProduct(product);
+//			orderItem.setQuantity(item.getQuantity());
+//			orderItem.setPrice(product.getPrice()*item.getQuantity());
+//
+//			orderItems.add(orderItem);
+//			total += orderItem.getPrice();
+//		}
+//
+//		order.setTotalPrice(total);
+//		order.setOrderItems(orderItems);
+//
+//		Order savedOrder = orderRepository.save(order);
+//		orderItemRepository.saveAll(orderItems);
+//		cartItemRepository.deleteAll(cartItems);
+//
+//		return savedOrder;
+//}
+
+	
+	public List<Order> getUserOrders(Long userId) {
+		return orderRepository.findByUserId(userId);
+		
+	}
+
+	
+	public List<OrderItem> getOrderItems(Long orderId) {
+		return orderItemRepository.findByOrderId(orderId);
+	}
+
+	public List<OrderDTO> getOrdersByUserId(Long userId) {
+        List<OrderDTO> orders = orderRepository.findOrdersByUserId(userId);
+
+        for (OrderDTO order : orders) {
+            List<OrderItemDTO> items = orderItemRepository.findOrderItemsByOrderId(order.getId());
+            order.setOrderItems(items);
+        }
+
+        return orders;
+    }
+
+}
+package ams.serviceImpl;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import ams.dto.ProductDTO;
+import ams.model.Product;
+import ams.repository.ProductRepository;
+
+@Service
+public class ProductServiceImpl {
+	
+	@Autowired
+	private ProductRepository productRepository;
+
+	
+	public Product addProduct(Product product) {
+		return productRepository.save(product);
+	}
+
+
+	public void deleteProduct(Long id) {
+		Optional<Product> opproduct=productRepository.findById(id);
+		if(opproduct.isPresent()) {
+			productRepository.delete(opproduct.get());
+		}
+	}
+	
+	public Optional<ProductDTO> getProductByIdDto(Long id) {
+		return productRepository.findByIdDto(id);
+		
+	}
+	public Optional<Product> getProductById(Long id){
+		return productRepository.findById(id);
+	}
+	
+
+	public List<ProductDTO> getAllProducts() {
+        return productRepository.findAllProductDTOs();
+    }
+
+    public List<ProductDTO> getProductsByFarmerId(Long farmerId) {
+        return productRepository.findProductsByFarmerId(farmerId);
+    }
+    
+   
+   
+
+}
+package ams.serviceImpl;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import ams.dto.UserDTO;
+import ams.model.User;
+//import ams.repository.CartRepository;
+import ams.repository.UserRepository;
+@Service
+public class UserServiceImpl {
+	
+	@Autowired
+	private UserRepository userRepository;
+
+
+	
+	public User registerUser(User user) {
+		
+		return userRepository.save(user);
+	}
+
+	
+	public Optional<User> getUserByEmail(String email) {
+		
+		return userRepository.findByEmail(email);
+	}
+
+
+	public Optional<User> getUserById(Long Id) {
+		return userRepository.findById(Id);
+	}
+	
+	public Optional<UserDTO> getUserByIdDto(Long id){
+		return userRepository.findByIdDto(id);
+	}
+	
+	public Optional<UserDTO> getUserByEmailDto(String email) {
+		
+		return userRepository.findByEmailDto(email);
+	}
+
+}

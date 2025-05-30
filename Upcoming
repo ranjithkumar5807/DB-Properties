@@ -1,0 +1,21 @@
+{
+  "month": "2025-07",
+  "upcomingMaintenance": [
+    {
+      "workOrderId": "WO9011",
+      "scheduledDate": "2025-07-12",
+      "status": "Open",
+      "assetName": "Main Transformer",
+      "location": "Zone A",
+      "planFrequency": "Monthly"
+    },
+    {
+      "workOrderId": "WO9012",
+      "scheduledDate": "2025-07-20",
+      "status": "Open",
+      "assetName": "Pipeline Booster",
+      "location": "Zone B",
+      "planFrequency": "Quarterly"
+    }
+  ]
+}

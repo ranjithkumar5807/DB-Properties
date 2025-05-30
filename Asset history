@@ -1,0 +1,20 @@
+{
+  "assetId": "A101",
+  "maintenanceHistory": [
+    {
+      "workOrderId": "WO9001",
+      "scheduledDate": "2025-06-15",
+      "status": "Completed",
+      "technician": "Ravi Kumar",
+      "timeSpentHours": 2.5
+    },
+    {
+      "workOrderId": "WO9015",
+      "scheduledDate": "2025-07-15",
+      "status": "Completed",
+      "technician": "Rita Singh",
+      "timeSpentHours": 3.0
+    }
+  ]
+}
+
